@@ -14,7 +14,8 @@ from server.judge_client import JudgeClient
 from server.utils import server_info, logger, token, ProblemIOMode
 
 app = Flask(__name__)
-DEBUG = os.environ.get("judger_debug") == "1"
+# DEBUG = os.environ.get("judger_debug") == "1"
+DEBUG = True
 app.debug = DEBUG
 
 #初始化环境和创建一些工作目录并修改权限
@@ -30,11 +31,11 @@ class InitSubmissionEnv(object):
 
     def __enter__(self):
         try:
-            os.mkdir(self.work_dir)
+            os.mkdir(self.work_dir)  #创建工作目录
             if self.init_test_case_dir:
-                os.mkdir(self.test_case_dir)
-            os.chown(self.work_dir, COMPILER_USER_UID, RUN_GROUP_GID)
-            os.chmod(self.work_dir, 0o711)
+                os.mkdir(self.test_case_dir)  #创建测试样例目录
+            os.chown(self.work_dir, COMPILER_USER_UID, RUN_GROUP_GID)  #修改文件的属主和属组
+            os.chmod(self.work_dir, 0o711)   #dir权限711
         except Exception as e:
             logger.exception(e)
             raise JudgeClientError("failed to create runtime dir")
@@ -43,7 +44,7 @@ class InitSubmissionEnv(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not DEBUG:
             try:
-                shutil.rmtree(self.work_dir)
+                shutil.rmtree(self.work_dir) #删除工作目录下的所有文件
             except Exception as e:
                 logger.exception(e)
                 raise JudgeClientError("failed to clean runtime dir")
@@ -62,14 +63,16 @@ class JudgeServer:
               spj_version=None, spj_config=None, spj_compile_config=None, spj_src=None, output=False,
               io_mode=None):
         if not io_mode:
-            io_mode = {"io_mode": ProblemIOMode.standard}
+            io_mode = {"io_mode": ProblemIOMode.standard}#标准I/O
 
         if not (test_case or test_case_id) or (test_case and test_case_id):
             raise JudgeClientError("invalid parameter")
         # init
-        compile_config = language_config.get("compile")
-        run_config = language_config["run"]
+        compile_config = language_config.get("compile")#compile config info
+        run_config = language_config["run"]#run config info
         submission_id = uuid.uuid4().hex
+
+        #print("############submission_id = ",submission_id)
 
         is_spj = spj_version and spj_config
 
@@ -81,19 +84,23 @@ class JudgeServer:
                 cls.compile_spj(spj_version=spj_version, src=spj_src,
                                 spj_compile_config=spj_compile_config)
 
+        print("!!!!!test_case =",test_case)
         init_test_case_dir = bool(test_case)
         with InitSubmissionEnv(JUDGER_WORKSPACE_BASE, submission_id=str(submission_id), init_test_case_dir=init_test_case_dir) as dirs:
             submission_dir, test_case_dir = dirs
+
             test_case_dir = test_case_dir or os.path.join(TEST_CASE_DIR, test_case_id)
+
+            #print("@@@@@test_case_dir = ",test_case_dir)
 
             if compile_config:
                 src_path = os.path.join(submission_dir, compile_config["src_name"])
 
                 # write source code into file
-                with open(src_path, "w", encoding="utf-8") as f:
+                with open(src_path, "w", encoding="utf-8") as f: #创建Main.java文件，并把源代码src写入该文件
                     f.write(src)
-                os.chown(src_path, COMPILER_USER_UID, 0)
-                os.chmod(src_path, 0o400)
+                os.chown(src_path, COMPILER_USER_UID, 0)  #更改属主和属组
+                os.chmod(src_path, 0o400)  #更改权限为只读
 
                 # compile source code, return exe file path
                 exe_path = Compiler().compile(compile_config=compile_config,
@@ -102,12 +109,12 @@ class JudgeServer:
                 try:
                     # Java exe_path is SOME_PATH/Main, but the real path is SOME_PATH/Main.class
                     # We ignore it temporarily
-                    os.chown(exe_path, RUN_USER_UID, 0)
-                    os.chmod(exe_path, 0o500)
+                    os.chown(exe_path, RUN_USER_UID, 0) #更改文件的属主和属组
+                    os.chmod(exe_path, 0o500) #更改可执行文件的权限
                 except Exception:
                     pass
             else:
-                exe_path = os.path.join(submission_dir, run_config["exe_name"])
+                exe_path = os.path.join(submission_dir, run_config["exe_name"]) #this is for spj
                 with open(exe_path, "w", encoding="utf-8") as f:
                     f.write(src)
 
@@ -191,6 +198,7 @@ def server(path):
                 data = request.json
             except Exception:
                 data = {}
+            #print(data)
             ret = {"err": None, "data": getattr(JudgeServer, path)(**data)}
         except (CompileError, TokenVerificationFailed, SPJCompileError, JudgeClientError) as e:
             logger.exception(e)

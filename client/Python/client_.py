@@ -1,6 +1,6 @@
 import hashlib
 import json
-
+import os
 import requests
 
 from client.Python.languages import  c_lang_config, cpp_lang_config, java_lang_config, c_lang_spj_config, \
@@ -64,36 +64,36 @@ class JudgeServerClient(object):
 if __name__ == "__main__":
     token = "mrhanice"
 
-    c_src = r"""
-    #include <stdio.h>
-    int main(){
-        int a, b;
-        scanf("%d%d", &a, &b);
-        printf("%d\n", a+b);
-        return 0;
-    }
-    """
+    # c_src = r"""
+    # #include <stdio.h>
+    # int main(){
+    #     int a, b;
+    #     scanf("%d%d", &a, &b);
+    #     printf("%d\n", a+b);
+    #     return 0;
+    # }
+    # """
 
-    c_spj_src = r"""
-    #include <stdio.h>
-    int main(){
-        return 1;
-    }
-    """
+    # c_spj_src = r"""
+    # #include <stdio.h>
+    # int main(){
+    #     return 1;
+    # }
+    # """
 
-    cpp_src = r"""
-    #include <iostream>
-
-    using namespace std;
-
-    int main()
-    {
-        int a,b;
-        cin >> a >> b;
-        cout << a+b << endl;
-        return 0;
-    }
-    """
+    # cpp_src = r"""
+    # #include <iostream>
+    #
+    # using namespace std;
+    #
+    # int main()
+    # {
+    #     int a,b;
+    #     cin >> a >> b;
+    #     cout << a+b << endl;
+    #     return 0;
+    # }
+    # """
 
     java_src = r"""
     import java.util.Scanner;
@@ -107,13 +107,13 @@ if __name__ == "__main__":
     }
     """
 
-    py2_src = """s = raw_input()
-s1 = s.split(" ")
-print int(s1[0]) + int(s1[1])"""
-
-    py3_src = """s = input()
-s1 = s.split(" ")
-print(int(s1[0]) + int(s1[1]))"""
+#     py2_src = """s = raw_input()
+# s1 = s.split(" ")
+# print int(s1[0]) + int(s1[1])"""
+#
+#     py3_src = """s = input()
+# s1 = s.split(" ")
+# print(int(s1[0]) + int(s1[1]))"""
 
     client = JudgeServerClient(token=token, server_base_url="http://127.0.0.1:5000")
     print("ping")
@@ -128,15 +128,19 @@ print(int(s1[0]) + int(s1[1]))"""
     #                    max_cpu_time=1000, max_memory=1024 * 1024 * 128,
     #                    test_case_id="normal", output=True), "\n\n")
 
-    print("cpp_judge")
-    print(client.judge(src=cpp_src, language_config=cpp_lang_config,
-                       max_cpu_time=1000, max_memory=1024 * 1024 * 128,
-                       test_case_id="normal"), "\n\n")
-    #
-    # print("java_judge")
-    # print(client.judge(src=java_src, language_config=java_lang_config,
-    #                    max_cpu_time=1000, max_memory=256 * 1024 * 1024,
+    # print("cpp_judge")
+    # print(client.judge(src=cpp_src, language_config=cpp_lang_config,
+    #                    max_cpu_time=1000, max_memory=1024 * 1024 * 128,
     #                    test_case_id="normal"), "\n\n")
+
+    # def judge(self, src, language_config, max_cpu_time, max_memory, test_case_id=None, test_case=None, spj_version=None, spj_config=None,
+    #           spj_compile_config=None, spj_src=None, output=False):
+    test_case_path = os.fspath("/home/mrhanice/OJdev/JudgeServer/tests/test_case/normal")
+    print("java_judge")
+    print(client.judge(src=java_src, language_config=java_lang_config,
+                       max_cpu_time=1000, max_memory=256 * 1024 * 1024,
+                       test_case_id='normal')
+          ,"\n\n")
     #
     # print("c_spj_judge")
     # print(client.judge(src=c_src, language_config=c_lang_config,
