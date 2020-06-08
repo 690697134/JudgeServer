@@ -16,7 +16,7 @@ SPJ_WA = 1
 SPJ_AC = 0
 SPJ_ERROR = -1
 
-
+#test_case_file_id is a int index
 def _run(instance, test_case_file_id):
     return instance._judge_one(test_case_file_id)
 
@@ -32,7 +32,7 @@ class JudgeClient(object):
         self._test_case_dir = test_case_dir
         self._submission_dir = submission_dir
 
-        self._pool = Pool(processes=psutil.cpu_count())
+        self._pool = Pool(processes=psutil.cpu_count()) #创建进程池，进程个数为CPU的个数
         self._test_case_info = self._load_test_case_info()
 
         self._spj_version = spj_version
@@ -103,7 +103,7 @@ class JudgeClient(object):
         test_case_info = self._get_test_case_file_info(test_case_file_id)
         in_file = os.path.join(self._test_case_dir, test_case_info["input_name"])
 
-        if self._io_mode["io_mode"] == ProblemIOMode.file:
+        if self._io_mode["io_mode"] == ProblemIOMode.file: #如果I/O模式为文件模式
             user_output_dir = os.path.join(self._submission_dir, str(test_case_file_id))
             os.mkdir(user_output_dir)
             os.chown(user_output_dir, RUN_USER_UID, RUN_GROUP_GID)
@@ -115,7 +115,7 @@ class JudgeClient(object):
             shutil.copyfile(in_file, os.path.join(user_output_dir, self._io_mode["input"]))
             kwargs = {"input_path": in_file, "output_path": real_user_output_file, "error_path": real_user_output_file}
         else:
-            real_user_output_file = user_output_file = os.path.join(self._submission_dir, test_case_file_id + ".out")
+            real_user_output_file = user_output_file = os.path.join(self._submission_dir, test_case_file_id + ".out") #在样例中是1.out
             kwargs = {"input_path": in_file, "output_path": real_user_output_file, "error_path": real_user_output_file}
 
         command = self._run_config["command"].format(exe_path=self._exe_path, exe_dir=os.path.dirname(self._exe_path),
@@ -161,7 +161,7 @@ class JudgeClient(object):
                     elif spj_result == SPJ_ERROR:
                         run_result["result"] = _judger.RESULT_SYSTEM_ERROR
                         run_result["error"] = _judger.ERROR_SPJ_ERROR
-                else:
+                else: #非 spj
                     run_result["output_md5"], is_ac = self._compare_output(test_case_file_id, user_output_file)
                     # -1 == Wrong Answer
                     if not is_ac:
@@ -181,8 +181,8 @@ class JudgeClient(object):
         result = []
         for test_case_file_id, _ in self._test_case_info["test_cases"].items():
             tmp_result.append(self._pool.apply_async(_run, (self, test_case_file_id)))
-        self._pool.close()
-        self._pool.join()
+        self._pool.close() #关闭进程池（pool），使其不在接受新的任务。
+        self._pool.join()  #主进程阻塞等待子进程的退出，join方法要在close或terminate之后使用。
         for item in tmp_result:
             # exception will be raised, when get() is called
             # # http://stackoverflow.com/questions/22094852/how-to-catch-exceptions-in-workers-in-multiprocessing

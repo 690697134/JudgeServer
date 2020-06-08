@@ -118,7 +118,7 @@ class JudgeServer:
                 with open(exe_path, "w", encoding="utf-8") as f:
                     f.write(src)
 
-            if init_test_case_dir:
+            if init_test_case_dir: #如果test_case参数没有制定的话，需要生成test_case
                 info = {"test_case_number": len(test_case), "spj": is_spj, "test_cases": {}}
                 # write test case
                 for index, item in enumerate(test_case):

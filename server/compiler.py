@@ -5,11 +5,11 @@ import os
 from server.config import COMPILER_LOG_PATH, COMPILER_USER_UID, COMPILER_GROUP_GID
 from server.exception import CompileError
 
-#编译输入程序
+#编译输入程序，返回生成的可执行文件路径exe_path
 class Compiler(object):
     def compile(self, compile_config, src_path, output_dir):
         command = compile_config["compile_command"]
-        exe_path = os.path.join(output_dir, compile_config["exe_name"])#路径拼接
+        exe_path = os.path.join(output_dir, compile_config["exe_name"])#路径拼接，生成exe_path,在此处是Main
         command = command.format(src_path=src_path, exe_dir=output_dir, exe_path=exe_path)
         compiler_out = os.path.join(output_dir, "compiler.out")
         _command = command.split(" ")
